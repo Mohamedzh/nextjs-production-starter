@@ -2,7 +2,7 @@
 
 A feature-packed, production-ready Next.js 16 starter template optimized for Railway deployment. **All features auto-enable based on environment variables** - builds never break.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/4joA-G?referralCode=D9T1uj&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## ✨ Features
 
