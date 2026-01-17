@@ -12,14 +12,7 @@ cmds = ["npm ci"]
 # Conditionally generate Prisma Client if DATABASE_URL is set
 # Then build Next.js application
 cmds = [
-  '''
-  if [ -n "$DATABASE_URL" ]; then
-    echo "✓ DATABASE_URL detected - generating Prisma Client..."
-    npx prisma generate
-  else
-    echo "⚠ Skipping Prisma generation (DATABASE_URL not set)"
-  fi
-  ''',
+  "if [ -n \"$DATABASE_URL\" ]; then echo '✓ DATABASE_URL detected - generating Prisma Client...' && npx prisma generate; else echo '⚠ Skipping Prisma generation (DATABASE_URL not set)'; fi",
   "npm run build"
 ]
 
