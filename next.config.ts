@@ -53,6 +53,14 @@ const nextConfig: NextConfig = {
             key: 'X-Frame-Options',
             value: 'DENY',
           },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()'
+          },
           // Content Security Policy
           // PERMISSIVE configuration - suitable for OAuth and third-party services
           // Tighten these directives for production based on your needs

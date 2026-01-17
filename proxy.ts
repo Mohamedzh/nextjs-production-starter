@@ -1,24 +1,18 @@
 /**
- * Next.js Middleware
- * Applies Content Security Policy (CSP) headers to all routes
- * Permissive by default to support OAuth and third-party integrations
+ * Next.js Proxy (Middleware)
+ * Currently a pass-through placeholder.
+ * Use this file for dynamic logic (e.g. auth guards, logging, AB testing).
+ * Static security headers are handled in next.config.ts for performance.
  */
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function proxy(request: NextRequest) {
-  const response = NextResponse.next();
-
-  // Additional security headers
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-
-  return response;
+  return NextResponse.next();
 }
 
-// Apply middleware to all routes except static files
 export const config = {
   matcher: [
     /*
@@ -28,6 +22,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
