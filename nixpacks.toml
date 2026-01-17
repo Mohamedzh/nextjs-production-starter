@@ -1,0 +1,34 @@
+# Nixpacks configuration for Railway deployment
+# Optimized for Next.js 16 with optional Prisma
+
+[phases.setup]
+nixPkgs = ["nodejs-20_x", "openssl"]
+
+[phases.install]
+# Install dependencies
+cmds = ["npm ci"]
+
+[phases.build]
+# Conditionally generate Prisma Client if DATABASE_URL is set
+# Then build Next.js application
+cmds = [
+  '''
+  if [ -n "$DATABASE_URL" ]; then
+    echo "✓ DATABASE_URL detected - generating Prisma Client..."
+    npx prisma generate
+  else
+    echo "⚠ Skipping Prisma generation (DATABASE_URL not set)"
+  fi
+  ''',
+  "npm run build"
+]
+
+[start]
+# Start Next.js in production mode
+cmd = "npm start"
+
+[variables]
+# Disable Next.js telemetry
+NEXT_TELEMETRY_DISABLED = "1"
+# Set Node environment
+NODE_ENV = "production"

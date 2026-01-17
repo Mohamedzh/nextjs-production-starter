@@ -1,0 +1,135 @@
+# Next.js Production Starter - Cursor Rules
+
+## Project Type
+Next.js 16.1.1 + TypeScript + Prisma 7 + NextAuth v4 + Redis + Tailwind v4 + Railway (Nixpacks)
+
+## Core Principle
+**All features are optional.** Code must work without any environment variables set.
+
+## Feature Detection Pattern
+```typescript
+import { features } from '@/lib/features';
+
+// ALWAYS check features before use
+if (features.auth) { /* NextAuth code */ }
+if (features.database) { /* Prisma code */ }
+if (features.redis) { /* Redis code */ }
+```
+
+## Critical Rules
+
+1. **Check `features.*` before using any optional service**
+2. **Use `getDb()` not direct `db` import** - returns null when disabled
+3. **Use `env.*` not `process.env.*`** - type-safe with Zod validation
+4. **Use `logger.*` not `console.*`** - structured JSON logging
+5. **Handle null gracefully** - features may be disabled
+
+## Code Patterns
+
+### API Route
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/lib/logger';
+
+export async function GET(request: NextRequest) {
+  try {
+    logger.info('Processing request');
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    logger.error({ error }, 'Failed');
+    return NextResponse.json({ error: 'Error' }, { status: 500 });
+  }
+}
+```
+
+### Database Query
+```typescript
+import { getDb } from '@/lib/db';
+import { features } from '@/lib/features';
+
+const db = getDb();
+if (!db) return null; // Handle gracefully
+
+const data = await db.model.findMany();
+```
+
+### Protected Route
+```typescript
+import { auth } from '@/lib/auth';
+import { features } from '@/lib/features';
+import { redirect } from 'next/navigation';
+
+if (!features.auth) redirect('/?error=auth-disabled');
+const session = await auth();
+if (!session) redirect('/signin');
+```
+
+### Conditional OAuth
+```typescript
+import { features } from '@/lib/features';
+
+{features.githubProvider && <GitHubButton />}
+{features.googleProvider && <GoogleButton />}
+```
+
+## File Structure
+
+- `lib/features.ts` → Feature detection (CHECK FIRST)
+- `lib/env.ts` → Type-safe environment variables
+- `lib/logger.ts` → Structured logging (Pino)
+- `lib/db.ts` → Conditional Prisma client
+- `lib/auth/` → NextAuth configuration
+
+## Environment Variables (All Optional)
+
+- `NEXTAUTH_SECRET` → Enables authentication
+- `DATABASE_URL` → Enables Prisma ORM
+- `REDIS_URL` → Enables Redis caching
+- `GITHUB_ID` + `GITHUB_SECRET` → GitHub OAuth
+- `GOOGLE_ID` + `GOOGLE_SECRET` → Google OAuth
+- `DISCORD_ID` + `DISCORD_SECRET` → Discord OAuth
+- `CRON_SECRET` → Secures cron endpoints
+
+## Important Patterns
+
+### SessionProvider (Client Component)
+```typescript
+// Only render when auth is enabled
+{features.auth ? (
+  <SessionProvider>{children}</SessionProvider>
+) : children}
+```
+
+### NextAuth v4 (Not v5)
+- Use `NextAuthOptions` type
+- Use `getServerSession(authConfig)` for server-side
+- Use `useSession()` from 'next-auth/react' for client-side
+
+## Testing Checklist
+
+Test with these configurations:
+1. No env vars → Should build successfully
+2. Auth only → NextAuth works
+3. Database only → Prisma works
+4. Full stack → All features work
+
+## Anti-Patterns
+
+- ❌ Assume features are available
+- ❌ Use `console.log()` in production code
+- ❌ Access `process.env` directly
+- ❌ Import `db` directly instead of using `getDb()`
+- ❌ Forget to check `features.*` flags
+
+## Key Imports
+
+```typescript
+import { features } from '@/lib/features';
+import { env } from '@/lib/env';
+import { getDb } from '@/lib/db';
+import { auth } from '@/lib/auth';
+import logger from '@/lib/logger';
+```
+
+## Remember
+**Flexibility over rigidity.** This template adapts to what's configured, never breaks builds.
