@@ -14,7 +14,12 @@ const envSchema = z.object({
 
   // NextAuth Configuration (Optional - enables authentication features)
   NEXTAUTH_SECRET: z.string().min(32).optional(),
-  NEXTAUTH_URL: z.string().url().optional(),
+
+  NEXTAUTH_URL: z.preprocess(
+    // If it's an empty string, treat it as undefined
+    (str) => process.env.NEXTAUTH_URL === "" ? undefined : str,
+    z.string().optional()
+  ),
 
   // Database Configuration (Optional - enables Prisma ORM)
   DATABASE_URL: z.string().optional(),
