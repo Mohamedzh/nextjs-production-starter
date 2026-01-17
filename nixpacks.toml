@@ -1,8 +1,7 @@
 # Nixpacks configuration for Railway deployment
-# Optimized for Next.js 16 with optional Prisma
 
 [phases.setup]
-nixPkgs = ["openssl"]
+nixPkgs = ["...", "openssl"]
 
 [phases.install]
 # Install dependencies
@@ -17,13 +16,10 @@ cmds = [
 ]
 
 [start]
-# Start Next.js in production mode
 cmd = "npm start"
 
 [variables]
-# Explicitly set Node.js version for Prisma 7.2.0 compatibility
-NIXPACKS_NODE_VERSION = "20.19.0"
-# Disable Next.js telemetry
+# Use the generic "20" to get the latest stable version (e.g. 20.28)
+NIXPACKS_NODE_VERSION = "20"
 NEXT_TELEMETRY_DISABLED = "1"
-# Set Node environment
 NODE_ENV = "production"
