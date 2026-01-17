@@ -21,6 +21,8 @@ cmds = [
 cmd = "npm start"
 
 [variables]
+# Explicitly set Node.js version for Prisma 7.2.0 compatibility
+NIXPACKS_NODE_VERSION = "20.19.0"
 # Disable Next.js telemetry
 NEXT_TELEMETRY_DISABLED = "1"
 # Set Node environment
