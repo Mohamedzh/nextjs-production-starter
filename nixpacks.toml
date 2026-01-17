@@ -2,7 +2,7 @@
 # Optimized for Next.js 16 with optional Prisma
 
 [phases.setup]
-nixPkgs = ["openssl"]
+nixPkgs = ["nodejs_20", "openssl"]
 
 [phases.install]
 # Install dependencies
