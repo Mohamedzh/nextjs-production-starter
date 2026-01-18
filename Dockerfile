@@ -6,6 +6,8 @@ RUN apk add --no-cache libc6-compat openssl
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
+# Copy postinstall script (required by npm ci)
+COPY scripts ./scripts
 RUN npm ci
 
 # 3. Build Stage
