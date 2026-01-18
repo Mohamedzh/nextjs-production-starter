@@ -19,11 +19,18 @@ COPY . .
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Run unconditionally
-# This ensures the files exist so "npm run build" doesn't crash on missing imports.
-# Prisma does NOT require a valid DB connection just to generate the client files.
-RUN npx prisma generate
+# 1. OPTIONAL: Accept a real DATABASE_URL as a build argument
+# If not provided, this variable is simply empty (it does not crash).
+ARG DATABASE_URL
 
+# 2. GENERATE PRISMA CLIENT
+# We use shell logic to handle the empty case safely.
+# syntax: ${VARIABLE:-DEFAULT_VALUE}
+RUN export DATABASE_URL=${DATABASE_URL:-"postgresql://dummy:dummy@localhost:5432/dummy"} && \
+    echo "Generating Prisma Client with: ${DATABASE_URL}" && \
+    npx prisma generate
+
+# 3. BUILD NEXT.JS
 RUN npm run build
 
 # 4. Production Runner Stage
