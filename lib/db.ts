@@ -26,19 +26,14 @@ function initializePrisma(): PrismaClient {
   try {
     // Dynamic require to avoid build errors when Prisma Client isn't generated yet
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { PrismaClient } = require('../app/generated/prisma');
+    const { PrismaClient } = require('../app/generated/prisma/client');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { PrismaPg  } = require('@prisma/adapter-pg');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Pool } = require('pg');
-
-    // Create PostgreSQL connection pool
-    const pool = new Pool({
-      connectionString: env.DATABASE_URL,
-    });
 
     // Create adapter for Prisma 7
-    const adapter = new PrismaPg (pool);
+    const adapter = new PrismaPg({
+      connectionString: env.DATABASE_URL,
+    });
 
     // Create Prisma Client instance
     const client = new PrismaClient({

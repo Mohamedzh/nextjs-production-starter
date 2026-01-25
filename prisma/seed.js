@@ -5,15 +5,13 @@
  */
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { PrismaClient } = require('../app/generated/prisma');
-const { PrismaPostgres } = require('@prisma/adapter-pg');
-const { Pool } = require('pg');
+const { PrismaClient } = require('../app/generated/prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
 
 // Create PostgreSQL adapter for Prisma 7
-const pool = new Pool({
+const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
-const adapter = new PrismaPostgres(pool);
 
 const prisma = new PrismaClient({ adapter });
 

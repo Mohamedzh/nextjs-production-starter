@@ -19,19 +19,11 @@ COPY . .
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# 1. OPTIONAL: Accept a real DATABASE_URL as a build argument
-# If not provided, this variable is simply empty (it does not crash).
-ARG DATABASE_URL
+# Generate Prisma Client (DATABASE_URL provided by Railway at build time)
+RUN npx prisma generate
 
-# 2. GENERATE PRISMA CLIENT
-# We use shell logic to handle the empty case safely.
-# syntax: ${VARIABLE:-DEFAULT_VALUE}
-RUN export DATABASE_URL=${DATABASE_URL:-"postgresql://dummy:dummy@localhost:5432/dummy"} && \
-    echo "Generating Prisma Client with: ${DATABASE_URL}" && \
-    npx prisma generate
-
-# 3. BUILD NEXT.JS
-RUN npm run build
+# Build Next.js (skip validation since REDIS_URL not available at build time)
+RUN SKIP_ENV_VALIDATION=true npm run build
 
 # 4. Production Runner Stage
 FROM base AS runner

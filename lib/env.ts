@@ -42,6 +42,11 @@ const envSchema = z.object({
 // Parse and validate environment variables
 // This runs at import time, so any errors will be caught immediately on startup
 function validateEnv() {
+  // Skip validation during build if explicitly requested (for Docker builds)
+  if (process.env.SKIP_ENV_VALIDATION === 'true') {
+    return process.env as z.infer<typeof envSchema>;
+  }
+  
   try {
     const parsed = envSchema.parse(process.env);
 
