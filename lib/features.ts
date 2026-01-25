@@ -2,27 +2,42 @@
  * Feature Detection
  * Auto-detects enabled features based on environment variable presence
  * Features are enabled when their required environment variables are set
+ * 
+ * NOTE: Uses getters to evaluate at runtime instead of build time
+ * This ensures Railway/Docker env vars are properly detected
  */
 
 export const features = {
   /** Authentication enabled when NEXTAUTH_SECRET is set */
-  auth: !!process.env.NEXTAUTH_SECRET,
+  get auth() {
+    return !!process.env.NEXTAUTH_SECRET;
+  },
   
   /** Database enabled when DATABASE_URL is set */
-  database: !!process.env.DATABASE_URL,
+  get database() {
+    return !!process.env.DATABASE_URL;
+  },
   
   /** Redis caching enabled when REDIS_URL is set */
-  redis: !!process.env.REDIS_URL,
+  get redis() {
+    return !!process.env.REDIS_URL;
+  },
   
   /** GitHub OAuth provider enabled when GITHUB_ID and GITHUB_SECRET are set */
-  githubProvider: !!(process.env.GITHUB_ID && process.env.GITHUB_SECRET),
+  get githubProvider() {
+    return !!(process.env.GITHUB_ID && process.env.GITHUB_SECRET);
+  },
   
   /** Google OAuth provider enabled when GOOGLE_ID and GOOGLE_SECRET are set */
-  googleProvider: !!(process.env.GOOGLE_ID && process.env.GOOGLE_SECRET),
+  get googleProvider() {
+    return !!(process.env.GOOGLE_ID && process.env.GOOGLE_SECRET);
+  },
   
   /** Discord OAuth provider enabled when DISCORD_ID and DISCORD_SECRET are set */
-  discordProvider: !!(process.env.DISCORD_ID && process.env.DISCORD_SECRET),
-} as const;
+  get discordProvider() {
+    return !!(process.env.DISCORD_ID && process.env.DISCORD_SECRET);
+  },
+};
 
 export type FeatureName = keyof typeof features;
 
