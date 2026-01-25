@@ -3,9 +3,9 @@
 
 ## Project Overview
 
-This is a production-grade Next.js 16 starter template optimized for Railway deployment. It features **auto-enabled optional services** based on environment variables, ensuring builds never break regardless of which features are configured.
+This is a production-grade Next.js 16 starter template optimized for Railway deployment with **required PostgreSQL and Redis**, and **optional authentication features**.
 
-**Core Philosophy:** All features are optional. The template works out-of-the-box with zero configuration and gracefully enables advanced features when environment variables are provided.
+**Core Philosophy:** PostgreSQL and Redis are always required. Authentication and OAuth providers are optional features that auto-enable based on environment variables.
 
 ---
 
@@ -18,18 +18,18 @@ This is a production-grade Next.js 16 starter template optimized for Railway dep
 
 ### 2. **Feature Detection System**
 - Located in `lib/features.ts`
-- Auto-detects enabled features based on env var presence
-- NEVER assume a feature is available - always check `features.auth`, `features.database`, etc.
+- Auto-detects optional features: auth and OAuth providers
+- Database and Redis are always available - no feature checks needed
 
-### 3. **Conditional Initialization**
-- Prisma Client: Returns `null` from `getDb()` when `DATABASE_URL` missing
-- NextAuth: Routes return 404 when `NEXTAUTH_SECRET` missing
-- Redis Cache: Falls back to filesystem when `REDIS_URL` missing
+### 3. **Database and Redis Initialization**
+- Prisma Client: Always initialized from `db` export in `lib/db.ts`
+- Redis Cache: Always available via `cache-handler.mjs`
+- Both are required - validated in `lib/env.ts`
 
-### 4. **Hybrid Authentication Strategy**
-- JWT by default (no database required)
-- Auto-upgrades to database sessions when `DATABASE_URL` is set
-- Check strategy with `getAuthStrategy()` from `lib/features.ts`
+### 4. **Authentication Strategy**
+- Always uses database sessions (DATABASE_URL is required)
+- Check `features.auth` before using NextAuth features
+- Auth is optional - app works without it
 
 ---
 
@@ -37,17 +37,35 @@ This is a production-grade Next.js 16 starter template optimized for Railway dep
 
 ### Accessing Optional Features
 
-**✅ CORRECT - Check feature availability:**
+**✅ CORRECT - Database is always available:**
 ```typescript
-import { features } from '@/lib/features';
-import { getDb } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export async function GET() {
-  if (!features.database) {
-    return Response.json({ error: 'Database not configured' }, { status: 503 });
+  // Database is always available - no checks needed
+  const data = await db.model.findMany();
+  return Response.json({ data });
+}
+```
+
+**✅ CORRECT - Check for auth feature:**
+```typescript
+import { features } from '@/lib/features';
+import { auth } from '@/lib/auth';
+
+export async function GET() {
+  if (!features.auth) {
+    return Response.json({ error: 'Auth not configured' }, { status: 503 });
   }
   
-  const db = getDb();
+  const session = await auth();
+  if (!session) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  return Response.json({ user: session.user });
+}
+```
   if (!db) {
     return Response.json({ error: 'Database unavailable' }, { status: 503 });
   }
@@ -154,21 +172,17 @@ export async function GET(request: NextRequest) {
 
 ### Adding a Database Model
 
-1. Check `features.database` before use
+1. Database is always available - no feature checks needed
 2. Edit `prisma/schema.prisma`
 3. Run `npx prisma migrate dev --name model_name`
-4. Use `getDb()` to access client (may be null)
-5. Handle null case gracefully
+4. Import `db` from `@/lib/db` and use directly
+5. Handle connection errors with try/catch
 
 **Template:**
 ```typescript
-import { getDb } from '@/lib/db';
+import { db } from '@/lib/db';
 
-const db = getDb();
-if (!db) {
-  throw new Error('Database not configured');
-}
-
+// Database is always available - no checks needed
 const record = await db.yourModel.create({ data });
 ```
 

@@ -92,23 +92,11 @@ const secret = process.env.NEXTAUTH_SECRET; // No validation
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import logger from '@/lib/logger';
-import { features } from '@/lib/features';
-import { getDb } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    // Check required feature
-    if (!features.database) {
-      return NextResponse.json(
-        { error: 'Database not configured' },
-        { status: 503 }
-      );
-    }
-
-    // Use feature
-    const db = getDb();
-    if (!db) throw new Error('Database unavailable');
-    
+    // Database is always available
     const data = await db.model.findMany();
     
     logger.info({ count: data.length }, 'Data fetched');

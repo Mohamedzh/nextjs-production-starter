@@ -49,8 +49,7 @@ export default async function SignInPage({
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-gray-500">
             <p>
-              Secured by NextAuth.js with{' '}
-              {features.database ? 'database sessions' : 'JWT tokens'}
+              Secured by NextAuth.js with database sessions
             </p>
           </div>
         </div>

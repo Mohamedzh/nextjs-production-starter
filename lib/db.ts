@@ -7,7 +7,7 @@
 import { env } from './env';
 import logger from './logger';
 
-// Type will be set dynamically when client is available
+// Type will be imported dynamically
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PrismaClient = any;
 
@@ -24,11 +24,11 @@ let prisma: PrismaClient | undefined = undefined;
  */
 function initializePrisma(): PrismaClient {
   try {
-    // Dynamically import Prisma Client from custom output location
+    // Dynamic require to avoid build errors when Prisma Client isn't generated yet
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { PrismaClient } = require('../app/generated/prisma');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { PrismaPostgres } = require('@prisma/adapter-pg');
+    const { PrismaPg  } = require('@prisma/adapter-pg');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Pool } = require('pg');
 
@@ -38,7 +38,7 @@ function initializePrisma(): PrismaClient {
     });
 
     // Create adapter for Prisma 7
-    const adapter = new PrismaPostgres(pool);
+    const adapter = new PrismaPg (pool);
 
     // Create Prisma Client instance
     const client = new PrismaClient({
@@ -50,15 +50,16 @@ function initializePrisma(): PrismaClient {
     return client;
   } catch (error) {
     logger.error({ error }, 'Failed to initialize Prisma Client');
-    throw new Error('Database initialization failed. Ensure Prisma Client is generated.');
+    throw new Error('Database initialization failed. Run: npx prisma generate');
   }
 }
 
 /**
  * Get Prisma database client
  * Returns singleton instance (handles Turbopack hot-reload)
+ * Note: This is async to support dynamic imports
  */
-export function getDb(): PrismaClient {
+function getDb(): PrismaClient {
   // In development with Turbopack, use global variable to prevent hot-reload issues
   if (process.env.NODE_ENV !== 'production') {
     if (!global.prisma) {
@@ -84,8 +85,7 @@ export const db = getDb();
  * Call this in serverless cleanup or testing teardown
  */
 export async function disconnectDb(): Promise<void> {
-  const client = getDb();
-  if (client) {
-    await client.$disconnect();
+  if (prisma) {
+    await prisma.$disconnect();
   }
 }
