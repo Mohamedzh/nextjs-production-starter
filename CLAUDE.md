@@ -1,48 +1,51 @@
 # Next.js Production Starter - Claude Code Rules
 
 ## Project Overview
-Railway-optimized Next.js 16.1.1 template with **gracefully degrading optional features**.
-- Zero config works (0/6 features)
-- Add features incrementally via env vars
-- Never breaks builds
+Railway-optimized Next.js 16.1.1 template with **required database/Redis** and **optional auth**.
+- PostgreSQL and Redis are always required
+- Auth and OAuth providers are optional
+- Optimized for Turbopack hot-reload
 
 ## Tech Stack
 - **Next.js:** 16.1.1 (App Router, Server Components, Turbopack)
 - **TypeScript:** 5.7.2 (strict mode)
 - **NextAuth:** v4.24.13 (v5 incompatible with Next.js 16)
-- **Prisma:** 7.2.0 (adapter pattern with @prisma/adapter-pg)
-- **Redis:** ioredis 5.9.1 (optional ISR cache handler)
-- **Node.js:** 20.19.0 LTS (fixed in engines, .nvmrc, nixpacks)
-- **Build:** Nixpacks (Railway) - no Dockerfile
+- **Prisma:** 7.2.0 with adapter pattern (@prisma/adapter-pg) - REQUIRED
+- **Redis:** ioredis 5.9.1 (ISR cache handler) - REQUIRED
+- **PostgreSQL:** Required via DATABASE_URL
+- **Node.js:** 20.19.0 LTS (fixed in engines, .nvmrc)
+- **Build:** Dockerfile (multi-stage) on Railway
 - **Styling:** Tailwind CSS v4
 
 ## Core Architecture Principle
 
-**Feature Detection Over Configuration**
+**Database/Redis Required, Auth Optional**
 ```typescript
-// ALWAYS check features before use
-import { features } from '@/lib/features';
+// Database and Redis are ALWAYS available
+import { db } from '@/lib/db';
+const users = await db.user.findMany();
 
+// Only check for OPTIONAL features
+import { features } from '@/lib/features';
 if (features.auth) { /* use NextAuth */ }
-if (features.database) { /* use Prisma */ }
-if (features.redis) { /* use Redis */ }
+if (features.githubProvider) { /* GitHub OAuth */ }
 ```
 
 ## Critical Patterns
 
-### 1. Database Access (Conditional)
+### 1. Database Access (Always Available)
 ```typescript
-import { getDb } from '@/lib/db';
+import { db } from '@/lib/db';
 
-const db = getDb(); // Returns null if DATABASE_URL not set
-if (!db) {
-  return NextResponse.json(
-    { error: 'Database not configured' },
-    { status: 503 }
-  );
-}
-
+// Database is always initialized - no null checks needed
 const users = await db.user.findMany();
+
+// Handle connection errors gracefully
+try {
+  const data = await db.model.findMany();
+} catch (error) {
+  logger.error({ error }, 'Database query failed');
+}
 ```
 
 ### 2. Authentication (NextAuth v4)

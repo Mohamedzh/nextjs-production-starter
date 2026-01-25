@@ -1,26 +1,15 @@
 /**
  * Feature Detection
  * Auto-detects enabled features based on environment variable presence
- * Features are enabled when their required environment variables are set
  * 
- * NOTE: Uses getters to evaluate at runtime instead of build time
- * This ensures Railway/Docker env vars are properly detected
+ * NOTE: PostgreSQL and Redis are always required (checked in env.ts)
+ * Only auth and OAuth providers are optional features
  */
 
 export const features = {
   /** Authentication enabled when NEXTAUTH_SECRET is set */
   get auth() {
     return !!process.env.NEXTAUTH_SECRET;
-  },
-  
-  /** Database enabled when DATABASE_URL is set */
-  get database() {
-    return !!process.env.DATABASE_URL;
-  },
-  
-  /** Redis caching enabled when REDIS_URL is set */
-  get redis() {
-    return !!process.env.REDIS_URL;
   },
   
   /** GitHub OAuth provider enabled when GITHUB_ID and GITHUB_SECRET are set */
@@ -42,11 +31,11 @@ export const features = {
 export type FeatureName = keyof typeof features;
 
 /**
- * Get authentication strategy based on available features
- * Uses database strategy when DATABASE_URL is present, otherwise JWT
+ * Get authentication strategy
+ * Always uses database strategy since DATABASE_URL is required
  */
-export function getAuthStrategy(): 'jwt' | 'database' {
-  return features.database ? 'database' : 'jwt';
+export function getAuthStrategy(): 'database' {
+  return 'database';
 }
 
 /**

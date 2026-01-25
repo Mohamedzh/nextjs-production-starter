@@ -13,7 +13,7 @@ const envSchema = z.object({
     .default("development"),
 
   // NextAuth Configuration (Optional - enables authentication features)
-  NEXTAUTH_SECRET: z.string().min(32).optional(),
+  NEXTAUTH_SECRET: z.string().min(32).nullish(),
 
   NEXTAUTH_URL: z.preprocess(
     // If it's an empty string, treat it as undefined
@@ -21,11 +21,11 @@ const envSchema = z.object({
     z.string().optional()
   ),
 
-  // Database Configuration (Optional - enables Prisma ORM)
-  DATABASE_URL: z.string().optional(),
+  // Database Configuration (Required - Prisma ORM)
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
-  // Redis Configuration (Optional - enables ISR caching)
-  REDIS_URL: z.string().optional(),
+  // Redis Configuration (Required - ISR caching)
+  REDIS_URL: z.string().min(1, "REDIS_URL is required"),
 
   // Cron Secret (Optional - secures cron endpoints)
   CRON_SECRET: z.string().min(32).optional(),

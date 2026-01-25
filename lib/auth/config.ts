@@ -9,13 +9,10 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import GithubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
 import DiscordProvider from 'next-auth/providers/discord';
-import { getDb } from '@/lib/db';
-import { features, getAuthStrategy } from '@/lib/features';
+import { db } from '@/lib/db';
+import { features } from '@/lib/features';
 import { env } from '@/lib/env';
 import logger from '@/lib/logger';
-
-// Get database client (null if not configured)
-const db = getDb();
 
 // Build providers array based on available credentials
 const providers: NextAuthOptions['providers'] = [];
@@ -57,12 +54,13 @@ if (features.auth && providers.length === 0) {
 }
 
 export const authConfig: NextAuthOptions = {
-  // Use Prisma adapter when database is available, otherwise no adapter (JWT only)
-  adapter: db ? PrismaAdapter(db) : undefined,
+  // Always use Prisma adapter since DATABASE_URL is required
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: features.auth ? PrismaAdapter(db) as any : undefined,
   
-  // Dynamic session strategy: database when available, JWT otherwise
+  // Always use database session strategy
   session: {
-    strategy: getAuthStrategy(),
+    strategy: 'database',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 

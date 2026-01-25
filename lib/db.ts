@@ -1,10 +1,11 @@
 /**
  * Prisma Database Client
- * Conditionally initialized based on DATABASE_URL presence
- * Returns null when database is not configured to prevent build failures
+ * Always initialized - DATABASE_URL is required
+ * Uses Prisma 7 with PostgreSQL adapter for optimal performance
  */
 
-import { features } from './features';
+import { env } from './env';
+import logger from './logger';
 
 // Type will be set dynamically when client is available
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,24 +16,13 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-let prisma: PrismaClient | null = null;
+let prisma: PrismaClient | undefined = undefined;
 
 /**
- * Get Prisma database client
- * Returns null if DATABASE_URL is not configured
- * This allows builds to succeed even without database connection
+ * Initialize Prisma Client with PostgreSQL adapter
+ * Handles Turbopack hot-reload in development
  */
-export function getDb(): PrismaClient | null {
-  // If database feature is disabled, return null immediately
-  if (!features.database) {
-    return null;
-  }
-
-  // Return existing instance if available
-  if (prisma) {
-    return prisma;
-  }
-
+function initializePrisma(): PrismaClient {
   try {
     // Dynamically import Prisma Client from custom output location
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -44,43 +34,48 @@ export function getDb(): PrismaClient | null {
 
     // Create PostgreSQL connection pool
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: env.DATABASE_URL,
     });
 
     // Create adapter for Prisma 7
     const adapter = new PrismaPostgres(pool);
 
-    // In development, use global variable to prevent hot-reload issues
-    if (process.env.NODE_ENV !== 'production') {
-      if (!global.prisma) {
-        global.prisma = new PrismaClient({
-          adapter,
-          log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-        });
-      }
-      prisma = global.prisma;
-    } else {
-      // In production, create new instance
-      prisma = new PrismaClient({
-        adapter,
-        log: ['error'],
-      });
-    }
+    // Create Prisma Client instance
+    const client = new PrismaClient({
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
 
-    return prisma;
-  } catch {
-    // Prisma client not generated yet or other error
-    // This is expected when DATABASE_URL is not set
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('Prisma Client not available. Run `prisma generate` with DATABASE_URL set.');
-    }
-    return null;
+    logger.info('Prisma Client initialized successfully');
+    return client;
+  } catch (error) {
+    logger.error({ error }, 'Failed to initialize Prisma Client');
+    throw new Error('Database initialization failed. Ensure Prisma Client is generated.');
   }
 }
 
 /**
- * Export db instance for convenience
- * Will be null if database is not configured
+ * Get Prisma database client
+ * Returns singleton instance (handles Turbopack hot-reload)
+ */
+export function getDb(): PrismaClient {
+  // In development with Turbopack, use global variable to prevent hot-reload issues
+  if (process.env.NODE_ENV !== 'production') {
+    if (!global.prisma) {
+      global.prisma = initializePrisma();
+    }
+    return global.prisma;
+  }
+
+  // In production, create singleton instance
+  if (!prisma) {
+    prisma = initializePrisma();
+  }
+  return prisma;
+}
+
+/**
+ * Export db instance for direct use
  */
 export const db = getDb();
 
@@ -89,7 +84,8 @@ export const db = getDb();
  * Call this in serverless cleanup or testing teardown
  */
 export async function disconnectDb(): Promise<void> {
-  if (prisma) {
-    await prisma.$disconnect();
+  const client = getDb();
+  if (client) {
+    await client.$disconnect();
   }
 }

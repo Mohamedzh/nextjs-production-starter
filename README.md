@@ -1,31 +1,35 @@
 # ⚡ Next.js Production Starter
 
-A feature-packed, production-ready Next.js 16 starter template optimized for Railway deployment. **All features auto-enable based on environment variables** - builds never break.
+A production-ready Next.js 16 starter template optimized for Railway deployment with **required PostgreSQL and Redis**, and **optional authentication**.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/4joA-G?referralCode=D9T1uj&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## ✨ Features
 
+### Always Required
+- 🗄️ **PostgreSQL + Prisma 7** - Type-safe ORM with adapter pattern (REQUIRED)
+- ⚡ **Redis** - Persistent ISR caching across deploys (REQUIRED)
+
 ### Core Stack
-- ⚡ **Next.js 16** - App Router, Server Components, TypeScript
+- ⚡ **Next.js 16** - App Router, Server Components, Turbopack
 - 🎨 **Tailwind CSS v4** - Modern styling with CSS variables
-- 🚂 **Railway Optimized** - Nixpacks auto-build (no Dockerfile needed)
+- 🚂 **Railway Optimized** - Dockerfile multi-stage builds
 - 🔒 **Production Security** - CSP, HSTS, XSS protection headers
 - 📝 **Structured Logging** - Pino with JSON output (redacted sensitive data)
 
 ### Optional Features (Auto-Enabled)
-- 🔐 **NextAuth.js v4** - Authentication with JWT/Database strategy
-- 🔑 **OAuth Providers** - GitHub, Google, Discord (independent add-ons)
-- 🗄️ **Prisma 7** - PostgreSQL ORM with adapter pattern
-- ⚡ **Redis** - Persistent ISR caching (survives deploys)
+- 🔐 **NextAuth.js v4** - Authentication (database strategy)
+- 🔑 **OAuth Providers** - GitHub, Google, Discord (independent)
 - 🎯 **Health Checks** - Railway monitoring endpoint
 - ⏰ **Cron Jobs** - Scheduled tasks with Railway
 
-## � Prerequisites
+## 📦 Prerequisites
 
 - **Node.js** 20.19.0 (LTS)
 - **npm** >= 10.0.0
-- **Docker** (optional, for local PostgreSQL/Redis)
+- **PostgreSQL** database (required)
+- **Redis** instance (required)
+- **Docker** (for local development)
 
 ## �🚀 Quick Start
 
@@ -50,18 +54,23 @@ Open [http://localhost:3000](http://localhost:3000) to see the feature dashboard
 
 ## 🎛️ Feature Configuration
 
-All features are **optional** and auto-enable when environment variables are set:
+**Required Environment Variables:**
 
-| Feature | Required Env Vars | Auto-Enabled |
-|---------|------------------|--------------|
-| **Authentication** | `NEXTAUTH_SECRET` | ✅ |
-| GitHub Provider | `GITHUB_ID` + `GITHUB_SECRET` | ✅ |
-| Google Provider | `GOOGLE_ID` + `GOOGLE_SECRET` | ✅ |
-| Discord Provider | `DISCORD_ID` + `DISCORD_SECRET` | ✅ |
-| **Database** | `DATABASE_URL` | ✅ |
-| **Redis Cache** | `REDIS_URL` | ✅ |
+| Feature | Environment Variable | Status |
+|---------|---------------------|--------|
+| **PostgreSQL** | `DATABASE_URL` | ✅ REQUIRED |
+| **Redis Cache** | `REDIS_URL` | ✅ REQUIRED |
 
-**Always Enabled:** Nixpacks Build, Structured Logging, Security Headers
+**Optional Features (Auto-Enabled):**
+
+| Feature | Environment Variables | Status |
+|---------|---------------------|--------|
+| **Authentication** | `NEXTAUTH_SECRET` | ❌ Optional |
+| GitHub OAuth | `GITHUB_ID` + `GITHUB_SECRET` | ❌ Optional |
+| Google OAuth | `GOOGLE_ID` + `GOOGLE_SECRET` | ❌ Optional |
+| Discord OAuth | `DISCORD_ID` + `DISCORD_SECRET` | ❌ Optional |
+
+**Always Enabled:** Dockerfile Build, Structured Logging, Security Headers, Turbopack Dev
 
 ## 🔐 Authentication
 
@@ -159,9 +168,10 @@ See `.env.example` for detailed configuration options.
 │   ├── db.ts               # Database client
 │   └── auth/               # Auth configuration
 ├── prisma/                  # Database schema
-├── nixpacks.toml           # Railway build config
-├── cache-handler.mjs       # Redis ISR cache handler
-└── docker-compose.yml      # Local PostgreSQL/Redis
+├── railway.json             # Railway deployment config
+├── Dockerfile               # Multi-stage production build
+├── cache-handler.mjs        # Redis ISR cache handler
+└── docker-compose.yml       # Local PostgreSQL/Redis
 ```
 
 ## � Railway Deployment
@@ -213,26 +223,59 @@ See `.env.example` for detailed setup.
 
 ## 🚂 Railway Deployment
 
-### Deployment Workflow
+### Quick Deploy
 
-1. **Connect Repository** - Import your GitHub repo in Railway dashboard
-2. **Initial Deploy** - App deploys successfully with 0/6 features (minimal setup)
-3. **Add Services** (optional) - Click "+ New" to add PostgreSQL or Redis
-   - Railway auto-injects `DATABASE_URL` and `REDIS_URL`
-4. **Add Env Vars** (optional) - Set `NEXTAUTH_SECRET`, OAuth credentials, etc.
+Click **Deploy on Railway** button above to get started.
 
-**Key Point:** Template deploys successfully at EVERY stage. Add features when needed.
-
-### CLI Deployment
+### Manual Deployment
 
 ```bash
+# Install Railway CLI
 npm install -g @railway/cli
+
+# Login to Railway
 railway login
+
+# Initialize project
 railway init
+
+# Add PostgreSQL service (REQUIRED)
+railway add --database postgres
+
+# Add Redis service (REQUIRED)
+railway add --database redis
+
+# Deploy
 railway up
 ```
 
-**Services are NOT auto-created** - add them manually in Railway dashboard as needed.
+### Build Configuration
+
+Railway uses the **Dockerfile** to build your Next.js app with a multi-stage build:
+
+- ✅ Generates Prisma Client with dummy URL during build
+- ✅ Uses real DATABASE_URL and REDIS_URL at runtime
+- ✅ Optimized for Next.js 16 standalone mode
+- ✅ Uses Node.js 20.x LTS
+
+### Environment Variables
+
+**Required (set in Railway dashboard or add services):**
+1. `DATABASE_URL` - Auto-injected when you add PostgreSQL service
+2. `REDIS_URL` - Auto-injected when you add Redis service
+
+**Optional (for authentication):**
+3. `NEXTAUTH_SECRET` - Generate with `openssl rand -base64 64`
+4. `NEXTAUTH_URL` - Auto-detected from Railway domain
+5. OAuth credentials: `GITHUB_ID/SECRET`, `GOOGLE_ID/SECRET`, `DISCORD_ID/SECRET`
+
+### Deployment Workflow
+
+1. **Connect Repository** - Import your GitHub repo in Railway dashboard
+2. **Add Services** - Click "+ New" to add PostgreSQL and Redis (REQUIRED)
+   - Railway auto-injects `DATABASE_URL` and `REDIS_URL`
+3. **Add Auth (Optional)** - Set `NEXTAUTH_SECRET` and OAuth credentials if needed
+4. **Deploy** - Railway automatically builds and deploys
 
 ## 📚 Documentation
 

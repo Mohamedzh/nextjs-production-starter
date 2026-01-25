@@ -5,7 +5,7 @@
 
 import { features, getAuthStrategy } from '@/lib/features';
 import { auth } from '@/lib/auth';
-import { getDb } from '@/lib/db';
+import { db } from '@/lib/db';
 import Link from 'next/link';
 
 interface FeatureCardProps {
@@ -70,22 +70,17 @@ export default async function Home() {
   // Check session if auth is enabled
   const session = features.auth ? await auth() : null;
   
-  // Test database connection
+  // Test database connection (always available)
   let dbConnected = false;
-  if (features.database) {
-    try {
-      const db = getDb();
-      if (db) {
-        await db.$queryRaw`SELECT 1`;
-        dbConnected = true;
-      }
-    } catch {
-      dbConnected = false;
-    }
+  try {
+    await db.$queryRaw`SELECT 1`;
+    dbConnected = true;
+  } catch {
+    dbConnected = false;
   }
 
-  // Count optional features (not always-enabled ones)
-  const optionalFeatures = ['auth', 'database', 'redis', 'githubProvider', 'googleProvider', 'discordProvider'] as const;
+  // Count optional features (only auth and OAuth providers)
+  const optionalFeatures = ['auth', 'githubProvider', 'googleProvider', 'discordProvider'] as const;
   const enabledOptionalCount = optionalFeatures.filter(f => features[f]).length;
 
   return (
@@ -216,22 +211,12 @@ export default async function Home() {
           <FeatureCard
             title="Database"
             description="PostgreSQL with Prisma ORM"
-            status={
-              features.database
-                ? dbConnected
-                  ? 'enabled'
-                  : 'partial'
-                : 'disabled'
-            }
-            details={
-              features.database
-                ? [
-                    `Connection: ${dbConnected ? 'Active' : 'Error'}`,
-                    'Prisma Client: Generated',
-                    'Migrations: Run db:migrate',
-                  ]
-                : ['Set DATABASE_URL to enable']
-            }
+            status={dbConnected ? 'enabled' : 'partial'}
+            details={[
+              `Connection: ${dbConnected ? 'Active' : 'Error'}`,
+              'Prisma Client: Generated',
+              'Migrations: Run db:migrate',
+            ]}
             setupLink="https://github.com/Mohamedzh/nextjs-production-starter#database"
           />
 
@@ -239,16 +224,12 @@ export default async function Home() {
           <FeatureCard
             title="Redis Cache"
             description="Persistent ISR caching"
-            status={features.redis ? 'enabled' : 'disabled'}
-            details={
-              features.redis
-                ? [
-                    'ISR cache: Persistent',
-                    'Connection: Active',
-                    'Survives deploys: Yes',
-                  ]
-                : ['Set REDIS_URL to enable']
-            }
+            status='enabled'
+            details={[
+              'ISR cache: Persistent',
+              'Connection: Active',
+              'Survives deploys: Yes',
+            ]}
             setupLink="https://github.com/Mohamedzh/nextjs-production-starter#redis-cache"
           />
         </div>
@@ -374,3 +355,5 @@ export default async function Home() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

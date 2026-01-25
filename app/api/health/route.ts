@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { features, getAuthStrategy } from '@/lib/features';
-import { getDb } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,13 +23,12 @@ interface HealthStatus {
     };
     database: {
       enabled: boolean;
-      status?: 'connected' | 'error' | 'disabled';
+      status: 'connected' | 'error';
       error?: string;
     };
     redis: {
       enabled: boolean;
-      status?: 'connected' | 'error' | 'disabled';
-      error?: string;
+      status: 'connected';
     };
   };
   memory: {
@@ -60,12 +59,12 @@ export async function GET() {
         }),
       },
       database: {
-        enabled: features.database,
-        status: features.database ? 'connected' : 'disabled',
+        enabled: true, // Always enabled
+        status: 'connected', // Will be updated below
       },
       redis: {
-        enabled: features.redis,
-        status: features.redis ? 'connected' : 'disabled',
+        enabled: true, // Always enabled
+        status: 'connected',
       },
     },
     memory: {
@@ -75,32 +74,14 @@ export async function GET() {
     },
   };
 
-  // Test database connection if enabled
-  if (features.database) {
-    try {
-      const db = getDb();
-      if (db) {
-        await db.$queryRaw`SELECT 1`;
-        status.features.database.status = 'connected';
-      }
-    } catch (error) {
-      status.status = 'degraded';
-      status.features.database.status = 'error';
-      status.features.database.error = error instanceof Error ? error.message : 'Unknown error';
-    }
-  }
-
-  // Test Redis connection if enabled
-  if (features.redis) {
-    try {
-      // Redis connection test would go here
-      // For now, we assume it's connected if the URL is set
-      status.features.redis.status = 'connected';
-    } catch (error) {
-      status.status = 'degraded';
-      status.features.redis.status = 'error';
-      status.features.redis.error = error instanceof Error ? error.message : 'Unknown error';
-    }
+  // Test database connection (always enabled)
+  try {
+    await db.$queryRaw`SELECT 1`;
+    status.features.database.status = 'connected';
+  } catch (error) {
+    status.status = 'degraded';
+    status.features.database.status = 'error';
+    status.features.database.error = error instanceof Error ? error.message : 'Unknown error';
   }
 
   const responseTime = Date.now() - startTime;

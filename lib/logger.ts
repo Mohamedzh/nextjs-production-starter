@@ -80,24 +80,16 @@ export function logStartup() {
   if (features.auth) {
     logger.info({
       msg: '🔐 Authentication enabled',
-      strategy: features.database ? 'database' : 'jwt',
+      strategy: 'database', // Always database since DATABASE_URL is required
       providers: Object.entries(features)
         .filter(([key, enabled]) => key.endsWith('Provider') && enabled)
         .map(([key]) => key.replace('Provider', '')),
     });
   }
 
-  if (features.database) {
-    logger.info('🗄️  Database connection enabled (Prisma)');
-  }
-
-  if (features.redis) {
-    logger.info('⚡ Redis caching enabled');
-  }
-
-  if (!features.auth && !features.database && !features.redis) {
-    logger.warn('⚠️  Running with minimal features - set environment variables to enable auth, database, or redis');
-  }
+  // Database and Redis are always enabled (required env vars)
+  logger.info('🗄️  Database connection enabled (Prisma)');
+  logger.info('⚡ Redis caching enabled');
 }
 
 /**

@@ -3,30 +3,28 @@
 
 ## Quick Reference
 
-This is a Next.js 16.1.1 template with **optional features** that auto-enable based on environment variables.
-- **Stack:** Next.js 16, NextAuth v4, Prisma 7, Redis, Tailwind v4
-- **Build:** Railway with Nixpacks (no Dockerfile)
-- **Philosophy:** All features are optional - builds never break (0/6 features = still works)
+This is a Next.js 16.1.1 template with **PostgreSQL and Redis required**, and **optional auth features**.
+- **Stack:** Next.js 16 with Turbopack, NextAuth v4, Prisma 7, Redis, Tailwind v4
+- **Build:** Railway with Dockerfile (multi-stage)
+- **Philosophy:** Database and Redis are always enabled; Auth and OAuth providers are optional
 
 ## Core Patterns
 
-### 1. Feature Detection (ALWAYS CHECK FIRST)
+### 1. Feature Detection (Check for Optional Features Only)
 ```typescript
 import { features } from '@/lib/features';
 
-// Check before using any optional feature
+// Only auth and OAuth providers are optional
 if (features.auth) { /* use NextAuth */ }
-if (features.database) { /* use Prisma */ }
-if (features.redis) { /* use Redis */ }
+if (features.githubProvider) { /* GitHub OAuth available */ }
+// Database and Redis are ALWAYS available - no need to check
 ```
 
-### 2. Database Access (May be null)
+### 2. Database Access (Always Available)
 ```typescript
-import { getDb } from '@/lib/db';
+import { db } from '@/lib/db';
 
-const db = getDb(); // Returns null if DATABASE_URL not set
-if (!db) return Response.json({ error: 'DB not configured' }, { status: 503 });
-
+// db is always initialized - no null checks needed
 const users = await db.user.findMany();
 ```
 
@@ -34,7 +32,12 @@ const users = await db.user.findMany();
 ```typescript
 import { env } from '@/lib/env';
 
-const secret = env.NEXTAUTH_SECRET; // Validated with Zod, may be undefined
+// DATABASE_URL and REDIS_URL are REQUIRED (validated with Zod)
+const dbUrl = env.DATABASE_URL; // Always exists
+const redisUrl = env.REDIS_URL; // Always exists
+
+// Auth vars are optional
+const secret = env.NEXTAUTH_SECRET; // May be undefined
 ```
 
 ### 4. Logging (Structured)
@@ -50,22 +53,25 @@ logger.error({ err }, 'Error occurred');
 ### When Creating API Routes:
 - Import `NextRequest`, `NextResponse` from `next/server`
 - Import `logger` from `@/lib/logger`
-- Check `features.*` before using optional services
+- Import `db` from `@/lib/db` (always available, no null checks)
+- Check `features.auth` before using authentication
 - Wrap logic in try/catch with error logging
 - Return proper HTTP status codes
 
 ### When Using Authentication:
 - Check `features.auth` before importing NextAuth
-- Use `auth()` from `@/lib/auth` for server-side (wraps getServerSession)
+- Use `auth()` from `@/lib/auth` for server-side
 - Use `useSession()` from `next-auth/react` for client-side
 - Check `features.githubProvider`/`features.googleProvider`/`features.discordProvider` for OAuth
-- **SessionProvider:** Only render when `features.auth` is true (conditional in layout)
+- **SessionProvider:** Only render when `features.auth` is true
+- **Strategy:** Always uses 'database' (DATABASE_URL is required)
 
 ### When Using Database:
-- Always use `getDb()`, never import `db` directly
-- Check if return value is null before querying
+- Import `db` from `@/lib/db` (not `getDb()`)
+- Database is always initialized - no null checks needed
 - Use Prisma's generated types
-- Handle connection errors gracefully
+- Handle connection errors gracefully with try/catch
+- Optimized for Turbopack with singleton pattern
 
 ### When Adding OAuth Providers:
 - Check `features.githubProvider` or `features.googleProvider`
@@ -108,15 +114,10 @@ export default async function ProtectedPage() {
 
 ### Database Query Template:
 ```typescript
-import { getDb } from '@/lib/db';
-import { features } from '@/lib/features';
+import { db } from '@/lib/db';
 
 export async function getData() {
-  if (!features.database) return null;
-  
-  const db = getDb();
-  if (!db) return null;
-  
+  // Database is always available
   return await db.yourModel.findMany();
 }
 ```
@@ -125,16 +126,16 @@ export async function getData() {
 
 - ❌ `console.log()` → ✅ `logger.info()`
 - ❌ `process.env.VAR` → ✅ `env.VAR`
-- ❌ Assuming features enabled → ✅ Check `features.*`
-- ❌ Direct `import { db }` → ✅ `getDb()`
+- ❌ Checking `features.database` or `features.redis` → ✅ They're always enabled
+- ❌ `getDb()` with null checks → ✅ Import `db` directly
 
 ## Key Files
 
-- `lib/features.ts` - Feature detection
-- `lib/env.ts` - Environment validation
+- `lib/features.ts` - Feature detection (auth and OAuth only)
+- `lib/env.ts` - Environment validation (DATABASE_URL and REDIS_URL required)
 - `lib/logger.ts` - Structured logging
-- `lib/db.ts` - Conditional database client
-- `lib/auth/config.ts` - NextAuth configuration
+- `lib/db.ts` - Database client (always initialized, singleton for Turbopack)
+- `lib/auth/config.ts` - NextAuth configuration (always uses database strategy)
 
 ## Testing
 
@@ -144,13 +145,18 @@ Always test code with these configs:
 3. **Database only** (`DATABASE_URL`) - Prisma works
 4. **Full stack** (all env vars) - All 6 features enabled
 
-**Builds must succeed in ALL scenarios.** The Prisma warning is expected without DATABASE_URL.
+**BuiMinimal** (DATABASE_URL + REDIS_URL only) - Auth disabled
+2. **Auth enabled** (+ NEXTAUTH_SECRET) - Auth works, no OAuth
+3. **Full stack** (all env vars) - All features enabled
+
+**DATABASE_URL and REDIS_URL are required for build to succeed.**
 
 ## Tech Stack Details
 
-- **Next.js:** 16.1.1 with Turbopack
-- **NextAuth:** v4.24.13 (v5 incompatible with Next.js 16)
-- **Prisma:** 7.2.0 with adapter pattern (@prisma/adapter-pg)
+- **Next.js:** 16.1.1 with Turbopack (dev hot-reload handled in db.ts)
+- **NextAuth:** v4.24.13 with database strategy (v5 incompatible with Next.js 16)
+- **Prisma:** 7.2.0 with adapter pattern (@prisma/adapter-pg) - **always required**
+- **Redis:** ioredis client - **always required** for ISR caching
 - **Node.js:** 20.19.0 LTS (fixed across all configs)
-- **Build:** Nixpacks on Railway (nixpacks.toml config)
-- **OAuth:** GitHub, Google, Discord (3 independent providers)
+- **Build:** Dockerfile with multi-stage build
+- **OAuth:** GitHub, Google, Discord (3 independent optional
