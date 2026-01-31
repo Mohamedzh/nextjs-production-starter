@@ -13,7 +13,11 @@ const envSchema = z.object({
     .default("development"),
 
   // NextAuth Configuration (Optional - enables authentication features)
-  NEXTAUTH_SECRET: z.string().min(32).nullish(),
+  NEXTAUTH_SECRET: z.preprocess(
+    // Treat empty string as undefined to make it truly optional
+    (str) => (!str || str === "") ? undefined : str,
+    z.string().min(32).nullish()
+  ),
 
   NEXTAUTH_URL: z.preprocess(
     // If it's an empty string, treat it as undefined

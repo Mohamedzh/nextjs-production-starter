@@ -13,8 +13,8 @@ const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   console.log('⚠ DATABASE_URL not set - Prisma Client generation skipped during install');
-  console.log('  This is expected during Docker build (uses dummy URL)');
-  console.log('  Ensure DATABASE_URL is set at runtime');
+  console.log('  This is expected during local development without .env file');
+  console.log('  Run: npx prisma generate manually or set DATABASE_URL');
   process.exit(0); // Don't fail the install
 }
 
