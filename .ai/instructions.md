@@ -3,9 +3,9 @@
 
 ## Project Overview
 
-This is a production-grade Next.js 16 starter template optimized for Railway deployment with **required PostgreSQL and Redis**, and **optional authentication features**.
+This is a production-grade Next.js 16 starter template optimized for Railway deployment with **required PostgreSQL**, **optional Redis**, and **optional authentication features**.
 
-**Core Philosophy:** PostgreSQL and Redis are always required. Authentication and OAuth providers are optional features that auto-enable based on environment variables.
+**Core Philosophy:** PostgreSQL is required. Redis and Authentication are optional features that auto-enable based on environment variables. Redis falls back to filesystem cache when not configured.
 
 ---
 
@@ -22,9 +22,10 @@ This is a production-grade Next.js 16 starter template optimized for Railway dep
 - Database and Redis are always available - no feature checks needed
 
 ### 3. **Database and Redis Initialization**
-- Prisma Client: Always initialized from `db` export in `lib/db.ts`
-- Redis Cache: Always available via `cache-handler.mjs`
-- Both are required - validated in `lib/env.ts`
+- Prisma Client: Always initialized from `db` export in `lib/db.ts` (REQUIRED)
+- Redis Cache: Optional, handled by `cache-handler.mjs` with filesystem fallback
+- DATABASE_URL is required and validated in `lib/env.ts`
+- REDIS_URL is optional (nullish) in `lib/env.ts`
 
 ### 4. **Authentication Strategy**
 - Always uses database sessions (DATABASE_URL is required)

@@ -28,7 +28,7 @@ interface HealthStatus {
     };
     redis: {
       enabled: boolean;
-      status: 'connected';
+      status: 'disabled' | 'connected';
     };
   };
   memory: {
@@ -63,8 +63,8 @@ export async function GET() {
         status: 'connected', // Will be updated below
       },
       redis: {
-        enabled: true, // Always enabled
-        status: 'connected',
+        enabled: !!process.env.REDIS_URL,
+        status: process.env.REDIS_URL ? 'connected' : 'disabled',
       },
     },
     memory: {

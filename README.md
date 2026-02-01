@@ -79,9 +79,9 @@ Open [http://localhost:3000](http://localhost:3000) to see the feature dashboard
 
 **Always Enabled:** Railpack Build, Structured Logging, Security Headers, Turbopack Dev
 
-## 🔐 Authentication
+## Authentication
 
-Enable authentication by setting `NEXTAUTH_SECRET`:
+Enable authentication by setting `NEXTAUTH_SECRET` (minimum 32 characters):
 
 ```bash
 npx auth secret
@@ -126,7 +126,7 @@ DISCORD_ID=your_discord_client_id
 DISCORD_SECRET=your_discord_client_secret
 ```
 
-## 🗄️ PostgreSQL Database
+## PostgreSQL Database
 
 Configure PostgreSQL with Prisma by setting `DATABASE_URL`:
 
@@ -140,7 +140,7 @@ npx prisma migrate dev
 npx prisma generate
 ```
 
-## ⚡ Redis Cache (Optional)
+## Redis Cache (Optional)
 
 Enable persistent ISR caching for production:
 
@@ -183,53 +183,6 @@ See `.env.example` for detailed configuration options.
 ├── cache-handler.mjs        # Redis ISR cache handler
 └── docker-compose.yml       # Local PostgreSQL/Redis
 ```
-
-## � Railway Deployment
-
-### Quick Deploy
-
-Click **Deploy on Railway** button above or:
-
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login to Railway
-railway login
-
-# Initialize project
-railway init
-
-# Add PostgreSQL service (optional)
-railway add --database postgres
-
-# Add Redis service (optional)
-railway add --database redis
-
-# Deploy
-railway up
-```
-
-### Build Configuration
-
-Railway uses **Nixpacks** to automatically detect and build your Next.js app. The `nixpacks.toml` file provides custom configuration:
-
-- ✅ Conditionally generates Prisma Client when `DATABASE_URL` is set
-- ✅ Optimizes for Next.js 16 standalone mode
-- ✅ Uses Node.js 20.x LTS
-
-**Railpack handles everything!** Railway automatically detects Node.js and builds your app.
-
-### Environment Variables
-
-Set these in Railway dashboard:
-
-1. **Required for Auth:** `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
-2. **Auto-provided:** `DATABASE_URL`, `REDIS_URL` (when services added)
-3. **Optional OAuth:** `GITHUB_ID/SECRET`, `GOOGLE_ID/SECRET`, `DISCORD_ID/SECRET`
-4. **Optional Cron:** `CRON_SECRET`
-
-See `.env.example` for detailed setup.
 
 ## 🚂 Railway Deployment
 
@@ -284,8 +237,9 @@ Railway uses **Railpack** to automatically build your Next.js app:
 ### Deployment Workflow
 
 1. **Connect Repository** - Import your GitHub repo in Railway dashboard
-2. **Add Services** - Click "+ New" to add PostgreSQL and Redis (REQUIRED)
-   - Railway auto-injects `DATABASE_URL` and `REDIS_URL`
+2. **Add Services** - Click "+ New" to add PostgreSQL (REQUIRED) and optionally Redis
+   - Railway auto-injects `DATABASE_URL` when PostgreSQL is added
+   - Railway auto-injects `REDIS_URL` when Redis is added (optional, recommended)
 3. **Add Auth (Optional)** - Set `NEXTAUTH_SECRET` and OAuth credentials if needed
 4. **Deploy** - Railway automatically builds and deploys
 

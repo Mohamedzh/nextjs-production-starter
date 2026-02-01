@@ -288,13 +288,18 @@ Check features before use:
 ```typescript
 import { features } from '@/lib/features';
 
+// Only check for optional auth features
 if (features.auth) {
   // Use authentication
 }
 
-if (features.database) {
-  // Use database
+if (features.githubProvider) {
+  // Use GitHub OAuth
 }
+
+// Database is always available - no feature check needed
+import { db } from '@/lib/db';
+const users = await db.user.findMany();
 ```
 
 ## Testing

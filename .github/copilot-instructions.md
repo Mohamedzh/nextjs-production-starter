@@ -135,7 +135,7 @@ export async function getData() {
 ## Key Files
 
 - `lib/features.ts` - Feature detection (auth and OAuth only)
-- `lib/env.ts` - Environment validation (DATABASE_URL and REDIS_URL required)
+- `lib/env.ts` - Environment validation (DATABASE_URL required, REDIS_URL optional)
 - `lib/logger.ts` - Structured logging
 - `lib/db.ts` - Database client (always initialized, singleton for Turbopack)
 - `lib/auth/config.ts` - NextAuth configuration (always uses database strategy)

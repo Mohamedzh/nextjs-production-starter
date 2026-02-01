@@ -145,7 +145,10 @@ export default async function Home() {
                     session ? `User: ${session.user?.email}` : 'Not signed in',
                     'Configure OAuth providers below',
                   ]
-                : ['Set NEXTAUTH_SECRET to enable']
+                : [
+                    'Set NEXTAUTH_SECRET to enable',
+                    'Must be at least 32 characters',
+                  ]
             }
             setupLink="https://github.com/Mohamedzh/nextjs-production-starter#authentication"
           />
@@ -217,20 +220,28 @@ export default async function Home() {
               'Prisma Client: Generated',
               'Migrations: Run db:migrate',
             ]}
-            setupLink="https://github.com/Mohamedzh/nextjs-production-starter#database"
+            setupLink="https://github.com/Mohamedzh/nextjs-production-starter#postgresql-database"
           />
 
           {/* Redis */}
           <FeatureCard
             title="Redis Cache"
             description="Persistent ISR caching"
-            status='enabled'
-            details={[
-              'ISR cache: Persistent',
-              'Connection: Active',
-              'Survives deploys: Yes',
-            ]}
-            setupLink="https://github.com/Mohamedzh/nextjs-production-starter#redis-cache"
+            status={process.env.REDIS_URL ? 'enabled' : 'disabled'}
+            details={
+              process.env.REDIS_URL
+                ? [
+                    'ISR cache: Persistent',
+                    'Connection: Configured',
+                    'Survives deploys: Yes',
+                  ]
+                : [
+                    'Fallback: Filesystem cache',
+                    'Set REDIS_URL to enable',
+                    'Recommended for production',
+                  ]
+            }
+            setupLink="https://github.com/Mohamedzh/nextjs-production-starter#redis-cache-optional"
           />
         </div>
 

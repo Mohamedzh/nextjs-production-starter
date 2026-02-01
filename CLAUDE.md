@@ -12,8 +12,8 @@ Railway-optimized Next.js 16.1.1 template with **required PostgreSQL** and **opt
 - **TypeScript:** 5.7.2 (strict mode)
 - **NextAuth:** v4.24.13 (v5 incompatible with Next.js 16)
 - **Prisma:** 7.2.0 with adapter pattern (@prisma/adapter-pg) - REQUIRED
-- **Redis:** ioredis 5.9.1 (ISR cache handler) - REQUIRED
-- **PostgreSQL:** Required via DATABASE_URL
+- **PostgreSQL:** Required via DATABASE_URL (always validated)
+- **Redis:** ioredis 5.9.1 (ISR cache handler) - OPTIONAL (filesystem fallback)
 - **Node.js:** 20.19.0 LTS (fixed in engines, .nvmrc)
 - **Build:** Railpack (auto-detection) on Railway
 - **Styling:** Tailwind CSS v4

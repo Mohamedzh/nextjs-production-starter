@@ -4,7 +4,7 @@
 Next.js 16.1.1 + TypeScript + Prisma 7 + NextAuth v4 + Redis + Tailwind v4 + Railway (Railpack)
 
 ## Core Principle
-**PostgreSQL and Redis are always required.** Auth and OAuth providers are optional.
+**PostgreSQL is required. Redis and Auth are optional.** Redis falls back to filesystem cache if not configured.
 
 ## Feature Detection Pattern
 ```typescript
@@ -14,7 +14,8 @@ import { features } from '@/lib/features';
 if (features.auth) { /* NextAuth code */ }
 if (features.githubProvider) { /* GitHub OAuth */ }
 
-// Database and Redis are ALWAYS available - no checks needed
+// Database is ALWAYS available - no checks needed
+// Redis is handled automatically by cache-handler.mjs
 import { db } from '@/lib/db';
 const users = await db.user.findMany();
 ```
@@ -25,7 +26,7 @@ const users = await db.user.findMany();
 2. **Import `db` directly from '@/lib/db'** - always initialized
 3. **Use `env.*` not `process.env.*`** - type-safe with Zod validation
 4. **Use `logger.*` not `console.*`** - structured JSON logging
-5. **DATABASE_URL and REDIS_URL are required** - validated at startup
+5. **DATABASE_URL is required, REDIS_URL is optional** - validated at startup
 
 ## Code Patterns
 
@@ -84,7 +85,7 @@ import { features } from '@/lib/features';
 
 **Required:**
 - `DATABASE_URL` → PostgreSQL connection (REQUIRED)
-- `REDIS_URL` → Redis connection (REQUIRED)
+- `REDIS_URL` → Redis connection (OPTIONAL - falls back to filesystem)
 
 **Optional:**
 - `NEXTAUTH_SECRET` → Enables authentication
@@ -115,7 +116,7 @@ Test with these configurations:
 2. With auth (+ NEXTAUTH_SECRET) → Auth works
 3. Full stack (+ all OAuth vars) → All features work
 
-**DATABASE_URL and REDIS_URL are required for build.**
+**Only DATABASE_URL is required for build.**
 
 ## Anti-Patterns
 
@@ -136,4 +137,4 @@ import logger from '@/lib/logger';
 ```
 
 ## Remember
-**Database and Redis are required. Auth is optional.** This template requires PostgreSQL and Redis but makes auth/OAuth flexible.
+**PostgreSQL is required. Redis and Auth are optional.** This template requires PostgreSQL but makes Redis and auth/OAuth flexible with automatic fallbacks.

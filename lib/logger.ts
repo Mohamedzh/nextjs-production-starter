@@ -87,9 +87,15 @@ export function logStartup() {
     });
   }
 
-  // Database and Redis are always enabled (required env vars)
-  logger.info('🗄️  Database connection enabled (Prisma)');
-  logger.info('⚡ Redis caching enabled');
+  // Database is always enabled (required env var)
+  logger.info('🗄️  PostgreSQL connection enabled (Prisma)');
+  
+  // Redis is optional
+  if (process.env.REDIS_URL) {
+    logger.info('⚡ Redis caching enabled');
+  } else {
+    logger.info('📁 Filesystem caching enabled (Redis not configured)');
+  }
 }
 
 /**
