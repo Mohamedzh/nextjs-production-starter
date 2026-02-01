@@ -3,10 +3,10 @@
 
 ## Quick Reference
 
-This is a Next.js 16.1.1 template with **PostgreSQL and Redis required**, and **optional auth features**.
-- **Stack:** Next.js 16 with Turbopack, NextAuth v4, Prisma 7, Redis, Tailwind v4
-- **Build:** Railway with Dockerfile (multi-stage)
-- **Philosophy:** Database and Redis are always enabled; Auth and OAuth providers are optional
+This is a Next.js 16.1.1 template with **PostgreSQL required**, **Redis optional**, and **optional auth features**.
+- **Stack:** Next.js 16 with Turbopack, NextAuth v4, Prisma 7, Redis (optional), Tailwind v4
+- **Build:** Railway with Railpack (auto-detection)
+- **Philosophy:** PostgreSQL is required; Redis and Auth are optional with automatic fallbacks
 
 ## Core Patterns
 
@@ -14,10 +14,11 @@ This is a Next.js 16.1.1 template with **PostgreSQL and Redis required**, and **
 ```typescript
 import { features } from '@/lib/features';
 
-// Only auth and OAuth providers are optional
+// Only auth and OAuth providers need feature checks
 if (features.auth) { /* use NextAuth */ }
 if (features.githubProvider) { /* GitHub OAuth available */ }
-// Database and Redis are ALWAYS available - no need to check
+// PostgreSQL is ALWAYS available - no need to check
+// Redis is handled automatically by cache-handler.mjs with fallback
 ```
 
 ### 2. Database Access (Always Available)
@@ -32,9 +33,11 @@ const users = await db.user.findMany();
 ```typescript
 import { env } from '@/lib/env';
 
-// DATABASE_URL and REDIS_URL are REQUIRED (validated with Zod)
+// DATABASE_URL is REQUIRED (validated with Zod)
 const dbUrl = env.DATABASE_URL; // Always exists
-const redisUrl = env.REDIS_URL; // Always exists
+
+// REDIS_URL is OPTIONAL (nullish)
+const redisUrl = env.REDIS_URL; // May be undefined
 
 // Auth vars are optional
 const secret = env.NEXTAUTH_SECRET; // May be undefined
@@ -126,8 +129,8 @@ export async function getData() {
 
 - ❌ `console.log()` → ✅ `logger.info()`
 - ❌ `process.env.VAR` → ✅ `env.VAR`
-- ❌ Checking `features.database` or `features.redis` → ✅ They're always enabled
-- ❌ `getDb()` with null checks → ✅ Import `db` directly
+- ❌ Checking `features.database` or `features.redis` → ✅ They don't exist
+- ❌ Using `getDb()` with null checks → ✅ Import `db` directly
 
 ## Key Files
 
@@ -140,23 +143,19 @@ export async function getData() {
 ## Testing
 
 Always test code with these configs:
-1. **No env vars** (minimal setup) - Should build and run successfully
-2. **Auth only** (`NEXTAUTH_SECRET`) - Auth works, no OAuth
-3. **Database only** (`DATABASE_URL`) - Prisma works
-4. **Full stack** (all env vars) - All 6 features enabled
+1. **Minimal** (`DATABASE_URL` only) - Core functionality works
+2. **With Redis** (+ `REDIS_URL`) - Persistent caching enabled
+3. **With Auth** (+ `NEXTAUTH_SECRET`) - Auth works, no OAuth
+4. **Full stack** (all env vars) - All features enabled
 
-**BuiMinimal** (DATABASE_URL + REDIS_URL only) - Auth disabled
-2. **Auth enabled** (+ NEXTAUTH_SECRET) - Auth works, no OAuth
-3. **Full stack** (all env vars) - All features enabled
-
-**DATABASE_URL and REDIS_URL are required for build to succeed.**
+**Note:** Only `DATABASE_URL` is required for build to succeed.
 
 ## Tech Stack Details
 
 - **Next.js:** 16.1.1 with Turbopack (dev hot-reload handled in db.ts)
 - **NextAuth:** v4.24.13 with database strategy (v5 incompatible with Next.js 16)
-- **Prisma:** 7.2.0 with adapter pattern (@prisma/adapter-pg) - **always required**
-- **Redis:** ioredis client - **always required** for ISR caching
+- **Prisma:** 7.2.0 with adapter pattern (@prisma/adapter-pg) - **required**
+- **Redis:** ioredis client - **optional** (ISR caching with filesystem fallback)
 - **Node.js:** 20.19.0 LTS (fixed across all configs)
-- **Build:** Dockerfile with multi-stage build
+- **Build:** Railpack with automatic Node.js detection
 - **OAuth:** GitHub, Google, Discord (3 independent optional

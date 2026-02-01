@@ -25,11 +25,11 @@ const envSchema = z.object({
     z.string().optional()
   ),
 
-  // Database Configuration (Required - Prisma ORM)
+  // PostgreSQL Configuration (Required - Prisma ORM)
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
-  // Redis Configuration (Required - ISR caching)
-  REDIS_URL: z.string().min(1, "REDIS_URL is required"),
+  // Redis Configuration (Optional - ISR caching, falls back to filesystem)
+  REDIS_URL: z.string().min(1).nullish(),
 
   // Cron Secret (Optional - secures cron endpoints)
   CRON_SECRET: z.string().min(32).optional(),

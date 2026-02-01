@@ -1,6 +1,6 @@
 # ⚡ Next.js Production Starter
 
-A production-ready Next.js 16 starter template optimized for Railway deployment with **required PostgreSQL and Redis**, and **optional authentication**.
+A production-ready Next.js 16 starter template optimized for Railway deployment with **required PostgreSQL**, **optional Redis**, and **optional authentication**.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/4joA-G?referralCode=D9T1uj&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
@@ -8,12 +8,14 @@ A production-ready Next.js 16 starter template optimized for Railway deployment 
 
 ### Always Required
 - 🗄️ **PostgreSQL + Prisma 7** - Type-safe ORM with adapter pattern (REQUIRED)
-- ⚡ **Redis** - Persistent ISR caching across deploys (REQUIRED)
+
+### Recommended for Production
+- ⚡ **Redis** - Persistent ISR caching across deploys (optional, falls back to filesystem)
 
 ### Core Stack
 - ⚡ **Next.js 16** - App Router, Server Components, Turbopack
 - 🎨 **Tailwind CSS v4** - Modern styling with CSS variables
-- 🚂 **Railway Optimized** - Dockerfile multi-stage builds
+- 🚂 **Railway Optimized** - Railpack auto-detection and build
 - 🔒 **Production Security** - CSP, HSTS, XSS protection headers
 - 📝 **Structured Logging** - Pino with JSON output (redacted sensitive data)
 
@@ -28,8 +30,8 @@ A production-ready Next.js 16 starter template optimized for Railway deployment 
 - **Node.js** 20.19.0 (LTS)
 - **npm** >= 10.0.0
 - **PostgreSQL** database (required)
-- **Redis** instance (required)
-- **Docker** (for local development)
+- **Redis** instance (optional - recommended for production)
+- **Docker Compose** (for local PostgreSQL/Redis only)
 
 ## �🚀 Quick Start
 
@@ -59,7 +61,12 @@ Open [http://localhost:3000](http://localhost:3000) to see the feature dashboard
 | Feature | Environment Variable | Status |
 |---------|---------------------|--------|
 | **PostgreSQL** | `DATABASE_URL` | ✅ REQUIRED |
-| **Redis Cache** | `REDIS_URL` | ✅ REQUIRED |
+
+**Recommended for Production:**
+
+| Feature | Environment Variable | Status |
+|---------|---------------------|--------|
+| **Redis Cache** | `REDIS_URL` | ⚠️ OPTIONAL |
 
 **Optional Features (Auto-Enabled):**
 
@@ -70,7 +77,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the feature dashboard
 | Google OAuth | `GOOGLE_ID` + `GOOGLE_SECRET` | ❌ Optional |
 | Discord OAuth | `DISCORD_ID` + `DISCORD_SECRET` | ❌ Optional |
 
-**Always Enabled:** Dockerfile Build, Structured Logging, Security Headers, Turbopack Dev
+**Always Enabled:** Railpack Build, Structured Logging, Security Headers, Turbopack Dev
 
 ## 🔐 Authentication
 
@@ -119,9 +126,9 @@ DISCORD_ID=your_discord_client_id
 DISCORD_SECRET=your_discord_client_secret
 ```
 
-## 🗄️ Database
+## 🗄️ PostgreSQL Database
 
-Enable PostgreSQL with Prisma by setting `DATABASE_URL`:
+Configure PostgreSQL with Prisma by setting `DATABASE_URL`:
 
 ```env
 DATABASE_URL=postgresql://user:password@host:5432/dbname
@@ -133,15 +140,18 @@ npx prisma migrate dev
 npx prisma generate
 ```
 
-## ⚡ Redis Cache
+## ⚡ Redis Cache (Optional)
 
-Enable persistent ISR caching:
+Enable persistent ISR caching for production:
 
 ```env
 REDIS_URL=redis://localhost:6379
 ```
 
-Redis keeps your ISR cache alive across deployments on Railway.
+**Benefits:**
+- Keeps ISR cache alive across deployments on Railway
+- Improves performance with persistent caching
+- Falls back to filesystem cache if not configured
 
 ### Environment Setup
 
@@ -208,7 +218,7 @@ Railway uses **Nixpacks** to automatically detect and build your Next.js app. Th
 - ✅ Optimizes for Next.js 16 standalone mode
 - ✅ Uses Node.js 20.x LTS
 
-**No Dockerfile needed!** Railway handles the build process automatically.
+**Railpack handles everything!** Railway automatically detects Node.js and builds your app.
 
 ### Environment Variables
 
@@ -242,7 +252,7 @@ railway init
 # Add PostgreSQL service (REQUIRED)
 railway add --database postgres
 
-# Add Redis service (REQUIRED)
+# Add Redis service (OPTIONAL - recommended for production)
 railway add --database redis
 
 # Deploy
@@ -251,7 +261,7 @@ railway up
 
 ### Build Configuration
 
-Railway uses the **Dockerfile** to build your Next.js app with a multi-stage build:
+Railway uses **Railpack** to automatically build your Next.js app:
 
 - ✅ Generates Prisma Client with dummy URL during build
 - ✅ Uses real DATABASE_URL and REDIS_URL at runtime
@@ -260,14 +270,16 @@ Railway uses the **Dockerfile** to build your Next.js app with a multi-stage bui
 
 ### Environment Variables
 
-**Required (set in Railway dashboard or add services):**
+**Required:**
 1. `DATABASE_URL` - Auto-injected when you add PostgreSQL service
-2. `REDIS_URL` - Auto-injected when you add Redis service
 
 **Optional (for authentication):**
-3. `NEXTAUTH_SECRET` - Generate with `openssl rand -base64 64`
-4. `NEXTAUTH_URL` - Auto-detected from Railway domain
-5. OAuth credentials: `GITHUB_ID/SECRET`, `GOOGLE_ID/SECRET`, `DISCORD_ID/SECRET`
+2. `NEXTAUTH_SECRET` - Generate with `openssl rand -base64 64`
+3. `NEXTAUTH_URL` - Auto-detected from Railway domain
+4. OAuth credentials: `GITHUB_ID/SECRET`, `GOOGLE_ID/SECRET`, `DISCORD_ID/SECRET`
+
+**Optional (for production caching):**
+5. `REDIS_URL` - Auto-injected when you add Redis service (falls back to filesystem)
 
 ### Deployment Workflow
 

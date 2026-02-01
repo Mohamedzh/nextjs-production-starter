@@ -1,8 +1,9 @@
 # Next.js Production Starter - Claude Code Rules
 
 ## Project Overview
-Railway-optimized Next.js 16.1.1 template with **required database/Redis** and **optional auth**.
-- PostgreSQL and Redis are always required
+Railway-optimized Next.js 16.1.1 template with **required PostgreSQL** and **optional Redis/auth**.
+- PostgreSQL is required
+- Redis is optional (falls back to filesystem cache)
 - Auth and OAuth providers are optional
 - Optimized for Turbopack hot-reload
 
@@ -14,18 +15,20 @@ Railway-optimized Next.js 16.1.1 template with **required database/Redis** and *
 - **Redis:** ioredis 5.9.1 (ISR cache handler) - REQUIRED
 - **PostgreSQL:** Required via DATABASE_URL
 - **Node.js:** 20.19.0 LTS (fixed in engines, .nvmrc)
-- **Build:** Dockerfile (multi-stage) on Railway
+- **Build:** Railpack (auto-detection) on Railway
 - **Styling:** Tailwind CSS v4
 
 ## Core Architecture Principle
 
-**Database/Redis Required, Auth Optional**
+**PostgreSQL Required, Redis/Auth Optional**
 ```typescript
-// Database and Redis are ALWAYS available
+// PostgreSQL is ALWAYS available
 import { db } from '@/lib/db';
 const users = await db.user.findMany();
 
-// Only check for OPTIONAL features
+// Redis is handled automatically by cache-handler.mjs (no feature check needed)
+
+// Only check for OPTIONAL auth features
 import { features } from '@/lib/features';
 if (features.auth) { /* use NextAuth */ }
 if (features.githubProvider) { /* GitHub OAuth */ }
@@ -215,7 +218,7 @@ cmd = 'npm start'
 ```
 
 - Conditionally runs `prisma generate` only if DATABASE_URL exists
-- No Dockerfile needed
+- No build config needed (Railpack auto-detects)
 - Node 20.19.0 LTS auto-detected
 
 ## Common Warnings (Ignorable)
@@ -231,12 +234,12 @@ Module not found: Can't resolve '../app/generated/prisma'
 
 ## Anti-Patterns (DO NOT DO)
 
-❌ Assume features are available
-❌ Use `console.log()` in production
-❌ Access `process.env.*` directly
-❌ Import `db` directly (use `getDb()`)
-❌ Forget to check `features.*`
-❌ Use `require()` without dynamic imports
+❌ Assume auth features are available without checking
+❌ Use `console.log()` in production (use `logger.*`)
+❌ Access `process.env.*` directly (use `env.*`)
+❌ Use `getDb()` with null checks (import `db` directly)
+❌ Check for `features.database` or `features.redis` (they don't exist)
+❌ Use `require()` without dynamic imports in lib/db.ts context
 ❌ Mount SessionProvider when auth disabled
 
 ## Testing Matrix
@@ -245,11 +248,11 @@ Module not found: Can't resolve '../app/generated/prisma'
 
 | Scenario | Env Vars | Expected |
 |----------|----------|----------|
-| Minimal | None | ✅ Build succeeds, 0/6 features |
-| Auth only | `NEXTAUTH_SECRET` | ✅ Auth enabled, no OAuth |
+| Minimal | `DATABASE_URL` only | ✅ Build succeeds, 0/4 auth features |
+| With Redis | + `REDIS_URL` | ✅ Redis cache enabled |
+| Auth only | + `NEXTAUTH_SECRET` | ✅ Auth enabled, no OAuth |
 | Auth + GitHub | + `GITHUB_ID/SECRET` | ✅ GitHub login works |
-| Database only | `DATABASE_URL` | ✅ Prisma works |
-| Full stack | All vars | ✅ All 6 features enabled |
+| Full stack | All vars | ✅ All features enabled |
 
 ## Key Gotchas
 

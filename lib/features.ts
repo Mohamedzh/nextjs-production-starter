@@ -2,8 +2,9 @@
  * Feature Detection
  * Auto-detects enabled features based on environment variable presence
  * 
- * NOTE: PostgreSQL and Redis are always required (checked in env.ts)
- * Only auth and OAuth providers are optional features
+ * NOTE: PostgreSQL is always required (checked in env.ts)
+ * Redis is optional and handled automatically by cache-handler.mjs (no check needed)
+ * Only auth and OAuth providers are checked here
  */
 
 export const features = {

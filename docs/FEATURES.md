@@ -4,8 +4,8 @@
 
 - Node.js 20.19.0 (LTS)
 - npm >= 10.0.0
-- PostgreSQL 16+ (optional, for database features)
-- Redis 7+ (optional, for caching)
+- PostgreSQL 16+ (REQUIRED)
+- Redis 7+ (OPTIONAL - recommended for production)
 
 ## Overview
 
@@ -17,15 +17,16 @@ This template uses an **auto-enable** system where features activate based on en
 
 ## Feature Detection
 
-All features are detected in `lib/features.ts`:
+Optional features are detected in `lib/features.ts`:
 
 ```typescript
 export const features = {
+  // PostgreSQL is REQUIRED - no feature check needed
+  // Redis is OPTIONAL - handled by cache-handler.mjs with automatic fallback
   auth: !!process.env.NEXTAUTH_SECRET,
-  database: !!process.env.DATABASE_URL,
-  redis: !!process.env.REDIS_URL,
   githubProvider: !!(process.env.GITHUB_ID && process.env.GITHUB_SECRET),
   googleProvider: !!(process.env.GOOGLE_ID && process.env.GOOGLE_SECRET),
+  discordProvider: !!(process.env.DISCORD_ID && process.env.DISCORD_SECRET),
 };
 ```
 
@@ -42,8 +43,8 @@ openssl rand -base64 64
 
 ### Strategy
 
-- **JWT (Default)**: No database required
-- **Database**: Auto-upgrades when `DATABASE_URL` is set
+- **Database (Always)**: Uses database sessions (DATABASE_URL is required)
+- No JWT fallback - PostgreSQL is required for this template
 
 ### OAuth Providers
 
@@ -83,11 +84,11 @@ import { useSession } from 'next-auth/react';
 const { data: session } = useSession();
 ```
 
-## Database (Prisma)
+## PostgreSQL Database (Prisma)
 
 ### Enable
 
-Set `DATABASE_URL`:
+Set `DATABASE_URL` (required):
 ```bash
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 ```
@@ -108,40 +109,39 @@ npm run db:studio
 ### Usage
 
 ```typescript
-import { getDb } from '@/lib/db';
-import { features } from '@/lib/features';
+import { db } from '@/lib/db';
+import logger from '@/lib/logger';
 
-if (!features.database) {
-  return { error: 'Database not configured' };
-}
-
-const db = getDb();
-if (!db) {
+// Database is always available - no feature checks needed
+try {
+  const users = await db.user.findMany();
+  return { users };
+} catch (error) {
+  logger.error({ error }, 'Database query failed');
   return { error: 'Database unavailable' };
 }
-
-const users = await db.user.findMany();
 ```
 
-## Redis Cache
+## Redis Cache (Optional)
 
 ### Enable
 
-Set `REDIS_URL`:
+Set `REDIS_URL` for production caching:
 ```bash
 REDIS_URL=redis://localhost:6379
 ```
 
 ### Behavior
 
-- **Enabled**: Persistent ISR cache across deployments
-- **Disabled**: Falls back to filesystem cache
+- **With Redis**: Persistent ISR cache across deployments and container restarts
+- **Without Redis**: Automatic fallback to Next.js filesystem cache
+- **No breaking changes**: App works fine without Redis
 
 ### Railway Setup
 
-1. Add Redis service in Railway dashboard
-2. `REDIS_URL` is automatically set
-3. Cache survives container restarts
+1. Add Redis service in Railway dashboard (optional)
+2. `REDIS_URL` is automatically injected when service is added
+3. Remove service anytime - deployment won't break
 
 ## Cron Jobs
 
@@ -196,11 +196,16 @@ Returns:
 }
 ```
 
-### Docker Integration
+### Railway Deployment
 
-Dockerfile includes HEALTHCHECK:
-```dockerfile
-HEALTHCHECK --interval=30s CMD curl -f http://localhost:3000/api/health || exit 1
+Railpack automatically detects and monitors health checks via `railway.json`:
+```json
+{
+  "deploy": {
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 10
+  }
+}
 ```
 
 ## Logging

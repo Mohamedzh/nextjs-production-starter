@@ -1,7 +1,7 @@
 # Next.js Production Starter - Cursor Rules
 
 ## Project Type
-Next.js 16.1.1 + TypeScript + Prisma 7 + NextAuth v4 + Redis + Tailwind v4 + Railway (Dockerfile)
+Next.js 16.1.1 + TypeScript + Prisma 7 + NextAuth v4 + Redis + Tailwind v4 + Railway (Railpack)
 
 ## Core Principle
 **PostgreSQL and Redis are always required.** Auth and OAuth providers are optional.

@@ -12,9 +12,9 @@ This is a production-grade Next.js 16 starter template optimized for Railway dep
 ## Architecture Decisions
 
 ### 1. **Standalone Output Mode**
-- Uses Next.js `output: 'standalone'` for Docker optimization
-- Reduces image size from ~1GB to ~150MB
-- Required for efficient Railway deployments
+- Uses Next.js `output: 'standalone'` for optimized Railway deployment
+- Reduces deployment size significantly
+- Railpack auto-detects and builds efficiently
 
 ### 2. **Feature Detection System**
 - Located in `lib/features.ts`
