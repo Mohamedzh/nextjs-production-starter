@@ -313,7 +313,7 @@ export default async function Home() {
             </a>
             
             <a
-              href="https://railway.app/template/nextjs-production-starter"
+              href="https://railway.com/deploy/nextjs-production-starter-suite?referralCode=D9T1uj&utm_medium=integration&utm_source=template&utm_campaign=nextjs-production-starter-suite"
               target="_blank"
               rel="noopener noreferrer"
               className="p-4 border border-blue-200 bg-blue-50 rounded-lg hover:border-blue-300 hover:shadow transition-all"

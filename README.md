@@ -2,7 +2,7 @@
 
 A production-ready Next.js 16 starter template optimized for Railway deployment with **required PostgreSQL**, **optional Redis**, and **optional authentication**.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/4joA-G?referralCode=D9T1uj&utm_medium=integration&utm_source=template&utm_campaign=generic)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/nextjs-production-starter-suite?referralCode=D9T1uj&utm_medium=integration&utm_source=template&utm_campaign=nextjs-production-starter-suite)
 
 ## ✨ Features
 
